@@ -17,6 +17,8 @@ import models
 
 # Using GPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+# Summary
 writer = SummaryWriter("D://GITHUB/places16_output/{}".format(datetime.now().strftime('%Y%m%d-%H')))
 
 # Parser
@@ -24,7 +26,6 @@ parser = argparse.ArgumentParser(description='PyTorch Places16 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true',
                         help='resume from checkpoint')
-args = parser.parse_args()
 
 # classes list
 class_names = open('classes.txt', 'r').read().split('\n')
@@ -34,6 +35,7 @@ def main():
 
     # Parameter
     BATCH_SIZE = 8
+    lr = 0.001
 
     mean = np.array([0.4914, 0.4822, 0.4465])
     std = np.array([0.2023, 0.1994, 0.2010])
@@ -86,7 +88,7 @@ def main():
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001)
+    optimizer = optim.SGD(model.parameters(), lr=lr)
     scheduler = lr_scheduler.StepLR(optimizer=optimizer, step_size=7, gamma=0.9)
 
     # Model visualization
