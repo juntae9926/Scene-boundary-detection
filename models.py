@@ -2,10 +2,7 @@ import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
 
-
 __all__ = ['resnet50', 'resnet101']
-
-
 model_urls = {'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
               'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth'}
 
@@ -14,7 +11,7 @@ def conv3x3(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
 
-# resnet-50 이상 version
+# for versions higher than resnet-50
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -117,10 +114,6 @@ class ResNet(nn.Module):
         return x
 
 def resnet50(pretrained=False, **kwargs):
-    """Constructs a ResNet-50 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
@@ -131,10 +124,6 @@ def resnet50(pretrained=False, **kwargs):
     return model
 
 def resnet101(pretrained=False, **kwargs):
-    """Constructs a ResNet-101 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
@@ -144,4 +133,3 @@ def resnet101(pretrained=False, **kwargs):
 
 if __name__ == "__main__":
     model = resnet101(pretrained=True)
-    print(model)

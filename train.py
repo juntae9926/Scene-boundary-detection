@@ -3,15 +3,17 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
-import numpy as np
-from torchvision import datasets, transforms
 import torchvision
+from torchvision import datasets, transforms
+from tensorboardX import SummaryWriter
+
 import os
 import argparse
-from tensorboardX import SummaryWriter
+import numpy as np
 import matplotlib.pyplot as plt
-import models
 from datetime import datetime
+
+import models
 
 # Using GPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -231,12 +233,3 @@ def accuracy(output, target, topk=(1,)):
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
