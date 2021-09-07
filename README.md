@@ -1,22 +1,6 @@
 # PlacesRecognition
 
-### Classes 16 : ###
-amusementpark
-aquarium
-cafe
-exhibition
-hotel
-koreanhouse
-library
-market
-mountain
-park
-restaurant
-shoppingmall
-store
-street
-theater
-zoo
+This project is related to CSAIL:Places365 task. It consisted of 16 classes suitable for korean youtube vlog, and received weight parameters from the Places365 project and updated through transfer learning.
 
-### Inference를 위한 테스트 영상 프레임 directory 설정 방법 ### 
+## How to set the test video frame directory for inference ## 
 frame_dir = 'test_video/000frame/frames.png' 형태로 추가.
