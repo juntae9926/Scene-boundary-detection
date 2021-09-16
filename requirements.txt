@@ -1,10 +1,13 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 numpy
 matplotlib
 torch
 torchvision
 tensorboardX
 =======
+=======
+>>>>>>> b27d21040f2dcc70e819d7f52164c891c11c7259
 beautifulsoup4==4.9.3
 bs4==0.0.1
 certifi==2021.5.30
@@ -30,4 +33,7 @@ tqdm==4.61.1
 urllib3==1.26.5
 webdriver-manager==3.4.2
 youtube-dl==2021.6.6
+<<<<<<< HEAD
 >>>>>>> 5498b4bfdc5d117da2c77df734dc12f8d6e54d54
+=======
+>>>>>>> b27d21040f2dcc70e819d7f52164c891c11c7259
