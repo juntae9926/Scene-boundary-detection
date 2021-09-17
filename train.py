@@ -19,7 +19,7 @@ import models
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Summary
-writer = SummaryWriter("D://GITHUB/places16_output/{}".format(datetime.now().strftime('%Y%m%d-%H')))
+writer = SummaryWriter("/workspace/jt/model/{}_writer/{}".format('train', datetime.now().strftime('%Y%m%d-%H')))
 
 # Parser
 parser = argparse.ArgumentParser(description='PyTorch Places16 Training')
@@ -31,11 +31,11 @@ parser.add_argument('--resume', '-r', action='store_true',
 class_names = open('classes.txt', 'r').read().split('\n')
 
 def main():
-    global top1, top5
+    global top1, top5, best_prec1
 
     # Parameter
-    BATCH_SIZE = 8
-    lr = 0.001
+    BATCH_SIZE = 32
+    lr = 0.1
 
     mean = np.array([0.4914, 0.4822, 0.4465])
     std = np.array([0.2023, 0.1994, 0.2010])
@@ -43,6 +43,7 @@ def main():
     # Initial argument
     top1 = AverageMeter()
     top5 = AverageMeter()
+    best_prec1 = 0
     start_epoch = 0
 
     # Data Load
@@ -61,7 +62,7 @@ def main():
             transforms.Normalize(mean, std)
         ]),
     }
-    image_dir = "D://GITHUB/Places16_data/"
+    image_dir = "/workspace/jt/places/places_16_210904"
     image_datasets = {x: datasets.ImageFolder(os.path.join(image_dir, x), data_transform[x])
                       for x in ['train', 'val']}
     trainloader = DataLoader(image_datasets['train'], batch_size=BATCH_SIZE, shuffle=True, num_workers=2)
@@ -98,7 +99,7 @@ def main():
         print('-' * 10)
         print('Epoch {}/{}'.format(epoch + 1, start_epoch + 200))
         train(trainloader, model, criterion, optimizer, epoch)
-        val(valloader, model, criterion, optimizer, epoch)
+        val(valloader, model, criterion, optimizer, epoch, best_prec1)
         scheduler.step()
 
 
@@ -133,8 +134,7 @@ def train(trainloader, model, criterion, optimizer, epoch):
     print("Train top5 accuracy: {}".format(top5.avg))
 
 # Validation
-def val(valloader, model, criterion, optimizer, epoch):
-    global best_prec1
+def val(valloader, model, criterion, optimizer, epoch, best_prec1):
     model.eval()
     val_loss = 0
     correct = 0
@@ -178,6 +178,7 @@ def val(valloader, model, criterion, optimizer, epoch):
     # Save checkpoint.
     acc = 100.*correct/total
     print("TOP-1 ACCURACY = ", acc)
+    print(acc, best_prec1)
     if acc > best_prec1:
         print('Saving..')
         state = {
