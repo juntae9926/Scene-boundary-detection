@@ -35,7 +35,7 @@ def main():
 
     # Parameter
     BATCH_SIZE = 32
-    lr = 0.1
+    lr = 0.01
 
     mean = np.array([0.4914, 0.4822, 0.4465])
     std = np.array([0.2023, 0.1994, 0.2010])
@@ -43,7 +43,6 @@ def main():
     # Initial argument
     top1 = AverageMeter()
     top5 = AverageMeter()
-    best_prec1 = 0
     start_epoch = 0
 
     # Data Load
@@ -65,8 +64,8 @@ def main():
     image_dir = "/workspace/jt/places/places_16_210904"
     image_datasets = {x: datasets.ImageFolder(os.path.join(image_dir, x), data_transform[x])
                       for x in ['train', 'val']}
-    trainloader = DataLoader(image_datasets['train'], batch_size=BATCH_SIZE, shuffle=True, num_workers=2)
-    valloader = DataLoader(image_datasets['val'], batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
+    trainloader = DataLoader(image_datasets['train'], batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
+    valloader = DataLoader(image_datasets['val'], batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
 
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
 
@@ -95,11 +94,12 @@ def main():
     # Model visualization
     print(model)
 
-    for epoch in range(start_epoch, start_epoch + 200):
+    best_prec1 = 0
+    for epoch in range(start_epoch, start_epoch + 100):
         print('-' * 10)
-        print('Epoch {}/{}'.format(epoch + 1, start_epoch + 200))
+        print('Epoch {}/{}'.format(epoch + 1, start_epoch + 100))
         train(trainloader, model, criterion, optimizer, epoch)
-        val(valloader, model, criterion, optimizer, epoch, best_prec1)
+        val(valloader, model, criterion, optimizer, epoch)
         scheduler.step()
 
 
@@ -134,7 +134,8 @@ def train(trainloader, model, criterion, optimizer, epoch):
     print("Train top5 accuracy: {}".format(top5.avg))
 
 # Validation
-def val(valloader, model, criterion, optimizer, epoch, best_prec1):
+def val(valloader, model, criterion, optimizer, epoch):
+    global best_prec1
     model.eval()
     val_loss = 0
     correct = 0
@@ -178,7 +179,6 @@ def val(valloader, model, criterion, optimizer, epoch, best_prec1):
     # Save checkpoint.
     acc = 100.*correct/total
     print("TOP-1 ACCURACY = ", acc)
-    print(acc, best_prec1)
     if acc > best_prec1:
         print('Saving..')
         state = {
