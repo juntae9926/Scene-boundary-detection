@@ -1,15 +1,8 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 numpy
 matplotlib
 torch
 torchvision
 tensorboardX
-=======
-=======
->>>>>>> b27d21040f2dcc70e819d7f52164c891c11c7259
-beautifulsoup4==4.9.3
-bs4==0.0.1
 certifi==2021.5.30
 chardet==4.0.0
 click==8.0.1
@@ -22,18 +15,9 @@ numpy
 opencv-python
 pandas
 python-dateutil==2.8.1
-pytube==10.8.4
 pytz==2021.1
 requests==2.25.1
 scenedetect==0.5.5
-selenium==3.141.0
 six==1.16.0
 soupsieve==2.2.1
-tqdm==4.61.1
 urllib3==1.26.5
-webdriver-manager==3.4.2
-youtube-dl==2021.6.6
-<<<<<<< HEAD
->>>>>>> 5498b4bfdc5d117da2c77df734dc12f8d6e54d54
-=======
->>>>>>> b27d21040f2dcc70e819d7f52164c891c11c7259
