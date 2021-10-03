@@ -1,10 +1,8 @@
-import numpy as np
 from PIL import ImageFont, ImageDraw, Image
 import os
 import json
-import cv2
 
-dir_name = 'demo_frame_210904'
+dir_name = 'inference_frame_211003'
 file_dirs = []
 file_names = []
 for i in os.listdir("/workspace/jt/places/{}/".format(dir_name)):
@@ -15,7 +13,7 @@ for i in os.listdir("/workspace/jt/places/{}/".format(dir_name)):
 for i in range(len(file_dirs)):
     VIDEO_NAME = file_names[i]
     print(VIDEO_NAME + " is working")
-    base_dir = "/workspace/jt/places/demo_frame_210904/{}/".format(VIDEO_NAME)
+    base_dir = "/workspace/jt/places/inference_frame_211003/{}/".format(VIDEO_NAME)
     print(base_dir)
 
     # IMAGE

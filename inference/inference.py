@@ -7,11 +7,11 @@ import torch.nn.functional as F
 import json
 import os
 
-dir_name = 'demo_frame_210904'
-model_name = 'train20210903-13.pth.tar'
+dir_name = 'inference_frame_211003'
+model_name = '20211003-15.pth.tar'
 
 # GPU device setting
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 # Initial arguments
 topk = 5
@@ -52,9 +52,9 @@ if __name__ == '__main__':
         datasets = ImageFolder(os.path.join(root_dir), transform=transforms, target_transform=None)
         valloader = DataLoader(datasets, batch_size=1, shuffle=False, num_workers=1)
 
-        import wideresnet
+        import models
         # wideresnet의 model 가져오기
-        model = wideresnet.resnet50()
+        model = models.resnet50()
         model.load_state_dict(state['state_dict'], strict=False)
         model = model.to(device)
 

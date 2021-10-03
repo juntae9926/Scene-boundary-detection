@@ -14,9 +14,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 import models
-
-# Using GPU
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+from temperature_scaling import ModelWithTemperature
 
 # Summary
 writer = SummaryWriter("/workspace/jt/model/{}_writer/{}".format('train', datetime.now().strftime('%Y%m%d-%H')))
@@ -85,7 +83,8 @@ def main():
 
     # Model
     model = models.resnet50(pretrained=True)
-    model = model.to(device)
+    model = model.to(torch.device("cuda:0"))
+    temp_model = ModelWithTemperature(model)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=lr)
@@ -100,11 +99,13 @@ def main():
         print('Epoch {}/{}'.format(epoch + 1, start_epoch + 100))
         train(trainloader, model, criterion, optimizer, epoch)
         val(valloader, model, criterion, optimizer, epoch)
+        temp_model.set_temperature(valloader)
         scheduler.step()
 
 
 # Training
 def train(trainloader, model, criterion, optimizer, epoch):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.train()
     train_loss = 0
     correct = 0
@@ -135,6 +136,7 @@ def train(trainloader, model, criterion, optimizer, epoch):
 
 # Validation
 def val(valloader, model, criterion, optimizer, epoch):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     global best_prec1
     model.eval()
     val_loss = 0

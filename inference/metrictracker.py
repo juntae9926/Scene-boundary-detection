@@ -13,7 +13,7 @@ def label_map(label_map_path):
             label_map[i] = line
 
     return label_map
-print(label_map("/workspace/jt/places/places_17_210713/classes.txt"))
+print(label_map("/workspace/classes.txt"))
 
 class MetricTracker(object):
     def __init__(self, label_map: List[str], writer=None):

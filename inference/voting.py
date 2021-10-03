@@ -4,8 +4,8 @@ from PIL import ImageFont, ImageDraw, Image
 
 file_dirs = []
 file_names = []
-for i in os.listdir("/workspace/jt/places/demo_frame_korean/"):
-    file_dirs.append("/workspace/jt/places/demo_frame_korean/" + i)
+for i in os.listdir("/workspace/jt/places/inference_frame_211001/"):
+    file_dirs.append("/workspace/jt/places/inference_frame_211001/" + i)
     file_name = file_names.append(i.split('.')[0])
 
 effective_files = []
@@ -15,7 +15,7 @@ top1_label_list = []
 for i in range(len(file_dirs)):
     VIDEO_NAME = file_names[i]
     print(VIDEO_NAME + " is working")
-    base_dir = "/workspace/jt/places/demo_frame_korean/{}/".format(VIDEO_NAME)
+    base_dir = "/workspace/jt/places/inference_frame_211001/{}/".format(VIDEO_NAME)
 
     # IMAGE
     img_dir = base_dir + "frame{}/".format(VIDEO_NAME)
