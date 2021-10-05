@@ -1,10 +1,12 @@
 import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
+import torch
 
 __all__ = ['resnet50', 'resnet101']
 model_urls = {'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-              'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth'}
+              'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+              'resnet50_places365':'http://places2.csail.mit.edu/models_places365/resnet50_places365.pth.tar'}
 
 def conv3x3(in_planes, out_planes, stride=1):
     "3x3 convolution with padding"
@@ -117,10 +119,18 @@ def resnet50(pretrained=False, **kwargs):
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
-        #print(model)
         print("Hello")
     num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 17)
+    model.fc = nn.Linear(num_ftrs, 16)
+    return model
+
+def resnet50_places365(pretrained=False, **kwargs):
+    model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+    if pretrained:
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet50_places365']), strict=False)
+        print("Hello")
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, 16)
     return model
 
 def resnet101(pretrained=False, **kwargs):
@@ -128,7 +138,7 @@ def resnet101(pretrained=False, **kwargs):
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
     num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 17)
+    model.fc = nn.Linear(num_ftrs, 16)
     return model
 
 if __name__ == "__main__":

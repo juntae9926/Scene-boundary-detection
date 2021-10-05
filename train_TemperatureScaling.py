@@ -32,7 +32,7 @@ def main():
     global top1, top5, best_prec1
 
     # Parameter
-    BATCH_SIZE = 32
+    BATCH_SIZE = 64
     lr = 0.01
 
     mean = np.array([0.4914, 0.4822, 0.4465])
@@ -82,8 +82,9 @@ def main():
         break
 
     # Model
-    model = models.resnet50(pretrained=True)
-    model = model.to(torch.device("cuda:0"))
+    model = models.resnet50_places365(pretrained=True)
+    model = torch.nn.DataParallel(model)
+    model = model.cuda()
     temp_model = ModelWithTemperature(model)
 
     criterion = nn.CrossEntropyLoss()
