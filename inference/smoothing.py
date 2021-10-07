@@ -31,21 +31,49 @@ def labelScore(label_map_path):
     return label_score
 
 
+def placeContext(base_dir, VIDEO_NAME):
+    with open(base_dir + '/smoothing_{}.json'.format(VIDEO_NAME)) as f:
+        json_data = json.load(f)
+
+    data = []
+    file_list = []
+    result = None
+
+    for i in range(len(json_data)-1):
+        if json_data[i]["description"] == json_data[i+1]["description"]:
+            file_list.append(i)
+            description = json_data[i]["description"]
+            result = {"file_context": file_list, "description": description}
+            if i == len(json_data)-2:
+                data.append(result)
+
+        else:
+            file_list.append(i)
+            description = json_data[i]["description"]
+            result = {"file_context": file_list, "description": description}
+            data.append(result)
+            file_list = []
+            result = {}
+    with open(base_dir + '/smoothing_context_{}.json'.format(VIDEO_NAME), 'w') as outfile:
+        json.dump(data, outfile, indent='\t')
+
+
 def main():
     file_dirs = []
     file_names = []
-    sevenkeys = []
+    sevenKeys = []
     label_map = labelMap('/workspace/classes.txt')
     weight = [[0.1], [0.1], [0.15], [0.3], [0.15], [0.1], [0.1]]
 
-    for i in os.listdir("/workspace/jt/places/inference_frame_211003/"):
-        file_dirs.append("/workspace/jt/places/inference_frame_211003/" + i)
-        dir_name = file_names.append(i.split('.')[0])
+    for i in os.listdir("/workspace/jt/places/inference_frame_211007/"):
+        file_dirs.append("/workspace/jt/places/inference_frame_211007/" + i)
+        file_names.append(i.split('/')[-1])
+        print(file_names)
 
     for i in range(len(file_dirs)):
         VIDEO_NAME = file_names[i]
         print(VIDEO_NAME + " is working")
-        base_dir = "/workspace/jt/places/inference_frame_211003/{}/".format(VIDEO_NAME)
+        base_dir = "/workspace/jt/places/inference_frame_211007/{}/".format(VIDEO_NAME)
 
         # IMAGE
         img_dir = base_dir + "frame{}/".format(VIDEO_NAME)
@@ -65,14 +93,14 @@ def main():
             if len(dq) == 7:
                 for i in dq:
                     arr1 = list(map(float, (k for k in i.values())))
-                    sevenkeys.append(arr1)
-                sevenkeys = np.array(sevenkeys)
-                sevenkeys.reshape(7, 16)
-                mul = np.multiply(sevenkeys, weight)
+                    sevenKeys.append(arr1)
+                sevenKeys = np.array(sevenKeys)
+                sevenKeys.reshape((7, 16))
+                mul = np.multiply(sevenKeys, weight)
                 mul = np.add.reduce(mul, axis=0)
                 max_index = np.argmax(mul)
                 inference_list.append(label_map[max_index])
-                sevenkeys = []
+                sevenKeys = []
                 dq.popleft()
 
         for i in range(len(inference_list)):
@@ -81,6 +109,7 @@ def main():
 
         with open(base_dir + '/smoothing_{}.json'.format(VIDEO_NAME), 'w') as outfile:
             json.dump(data, outfile, indent='\t')
+        placeContext(base_dir, VIDEO_NAME)
         print(data)
 
 if __name__ == '__main__':
