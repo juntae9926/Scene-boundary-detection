@@ -7,8 +7,8 @@ import torch.nn.functional as F
 import json
 import os
 
-dir_name = 'inference_frame_211003'
-model_name = '20211003-15.pth.tar'
+dir_name = 'inference_frame_211008'
+model_name = '20211007-08.pth.tar'
 
 # GPU device setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
@@ -18,11 +18,9 @@ topk = 5
 SKIP_FRAME = 30
 file_name = None
 model_path = '/workspace/jt/model/{}'.format(model_name)
-label_map_path = '/workspace/jt/places/places_16_210904/classes.txt'.format(dir_name)
 
-# MatricTracker편에서 만들어 두었던 label_map 메서드를 활용.
 from metrictracker import label_map
-label_map = label_map(label_map_path)
+label_map = label_map('/workspace/classes.txt')
 state = torch.load(model_path)
 
 file_dirs = []
@@ -53,7 +51,6 @@ if __name__ == '__main__':
         valloader = DataLoader(datasets, batch_size=1, shuffle=False, num_workers=1)
 
         import models
-        # wideresnet의 model 가져오기
         model = models.resnet50()
         model.load_state_dict(state['state_dict'], strict=False)
         model = model.to(device)
@@ -108,4 +105,3 @@ if __name__ == '__main__':
             #print("-" * 10)
 
 # json파일 자동생성 및 자동 저장하게끔 디렉토리 이름에서 따오기
-# resnet-101로 실험 ㄱㄱ
