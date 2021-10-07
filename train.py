@@ -23,7 +23,7 @@ writer = SummaryWriter("/workspace/jt/model/{}_writer/{}".format('train', dateti
 
 # Parser
 parser = argparse.ArgumentParser(description='PyTorch Places16 Training')
-parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true',
                         help='resume from checkpoint')
 
@@ -34,8 +34,8 @@ def main():
     global top1, top5, best_prec1
 
     # Parameter
-    BATCH_SIZE = 32
-    lr = 0.01
+    BATCH_SIZE = 64
+    lr = 0.001
 
     mean = np.array([0.4914, 0.4822, 0.4465])
     std = np.array([0.2023, 0.1994, 0.2010])
@@ -85,7 +85,8 @@ def main():
 
     # Model
     model = models.resnet50(pretrained=True)
-    model = model.to(device)
+    model = torch.nn.DataParallel(model)
+    model = model.cuda()
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=lr)
