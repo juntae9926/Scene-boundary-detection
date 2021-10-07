@@ -1,16 +1,21 @@
 import torch
 from torch import nn, optim
 from torch.nn import functional as F
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+import numpy as np
+import os
+
+from datetime import datetime
+import models
+
+### PARAMETERS ###
+model_path = '/workspace/jt/model/20211003-19.pth.tar'
+BATCH_SIZE = 64
+dataset_dir = "/workspace/jt/places/places_16_210904"
 
 
 class ModelWithTemperature(nn.Module):
-    """
-    A thin decorator, which wraps a model with temperature scaling
-    model (nn.Module):
-        A classification neural network
-        NB: Output of the neural network should be the classification logits,
-            NOT the softmax (or log softmax)!
-    """
     def __init__(self, model):
         super(ModelWithTemperature, self).__init__()
         self.model = model
@@ -21,20 +26,12 @@ class ModelWithTemperature(nn.Module):
         return self.temperature_scale(logits)
 
     def temperature_scale(self, logits):
-        """
-        Perform temperature scaling on logits
-        """
         # Expand temperature to match the size of logits
         temperature = self.temperature.unsqueeze(1).expand(logits.size(0), logits.size(1))
         return logits / temperature
 
     # This function probably should live outside of this class, but whatever
     def set_temperature(self, valid_loader):
-        """
-        Tune the tempearature of the model (using the validation set).
-        We're going to set it to optimize NLL.
-        valid_loader (DataLoader): validation set loader
-        """
         self.cuda()
         nll_criterion = nn.CrossEntropyLoss().cuda()
         ece_criterion = _ECELoss().cuda()
@@ -76,19 +73,6 @@ class ModelWithTemperature(nn.Module):
 
 
 class _ECELoss(nn.Module):
-    """
-    Calculates the Expected Calibration Error of a model.
-    (This isn't necessary for temperature scaling, just a cool metric).
-    The input to this loss is the logits of a model, NOT the softmax scores.
-    This divides the confidence outputs into equally-sized interval bins.
-    In each bin, we compute the confidence gap:
-    bin_gap = | avg_confidence_in_bin - accuracy_in_bin |
-    We then return a weighted average of the gaps, based on the number
-    of samples in each bin
-    See: Naeini, Mahdi Pakdaman, Gregory F. Cooper, and Milos Hauskrecht.
-    "Obtaining Well Calibrated Probabilities Using Bayesian Binning." AAAI.
-    2015.
-    """
     def __init__(self, n_bins=15):
         """
         n_bins (int): number of confidence interval bins
@@ -114,3 +98,41 @@ class _ECELoss(nn.Module):
                 ece += torch.abs(avg_confidence_in_bin - accuracy_in_bin) * prop_in_bin
 
         return ece
+
+def main(model_path, BATCH_SIZE, dataset_dir):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    mean = np.array([0.4914, 0.4822, 0.4465])
+    std = np.array([0.2023, 0.1994, 0.2010])
+
+    # Data Load
+    data_transform = {
+        'train': transforms.Compose([
+            transforms.RandomResizedCrop((224, 224)),
+            # transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+    }
+    image_datasets = {x: datasets.ImageFolder(os.path.join(dataset_dir, x), data_transform[x])
+                      for x in ['train', 'val']}
+    valloader = DataLoader(image_datasets['val'], batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+
+    state = torch.load(model_path)
+    model = models.resnet50()
+    model.load_state_dict(state['state_dict'], strict=False)
+    model = model.to(device)
+
+    temp_model = ModelWithTemperature(model)
+    temp_model.set_temperature(valloader)
+    print('Saving..')
+    torch.save(state, '/workspace/jt/model/{}.pth.tar'.format(datetime.now().strftime('%Y%m%d-%H-scaling')))
+
+if __name__ == '__main__':
+    main(model_path, BATCH_SIZE, dataset_dir)
