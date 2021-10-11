@@ -21,12 +21,6 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Summary
 writer = SummaryWriter("/workspace/jt/model/{}_writer/{}".format('train', datetime.now().strftime('%Y%m%d-%H')))
 
-# Parser
-parser = argparse.ArgumentParser(description='PyTorch Places16 Training')
-parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
-parser.add_argument('--resume', '-r', action='store_true',
-                        help='resume from checkpoint')
-
 # classes list
 class_names = open('classes.txt', 'r').read().split('\n')
 
@@ -34,11 +28,11 @@ def main():
     global top1, top5, best_prec1
 
     # Parameter
-    BATCH_SIZE = 64
-    lr = 0.001
+    BATCH_SIZE = 32
+    lr = 0.1
 
-    mean = np.array([0.4914, 0.4822, 0.4465])
-    std = np.array([0.2023, 0.1994, 0.2010])
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
 
     # Initial argument
     top1 = AverageMeter()
@@ -49,7 +43,6 @@ def main():
     data_transform = {
         'train': transforms.Compose([
             transforms.RandomResizedCrop((224, 224)),
-            # transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
@@ -61,7 +54,7 @@ def main():
             transforms.Normalize(mean, std)
         ]),
     }
-    image_dir = "/workspace/jt/places/places_16_210904"
+    image_dir = "/workspace/jt/places/places_16_211008"
     image_datasets = {x: datasets.ImageFolder(os.path.join(image_dir, x), data_transform[x])
                       for x in ['train', 'val']}
     trainloader = DataLoader(image_datasets['train'], batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
@@ -84,23 +77,27 @@ def main():
         break
 
     # Model
-    model = models.resnet50(pretrained=True)
+    model = models.resnet50(pretrained=False)
     model = torch.nn.DataParallel(model)
     model = model.cuda()
 
+    params_to_update = model.parameters()
+
+
+
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=lr)
+    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
     scheduler = lr_scheduler.StepLR(optimizer=optimizer, step_size=7, gamma=0.9)
 
     # Model visualization
     print(model)
 
     best_prec1 = 0
-    for epoch in range(start_epoch, start_epoch + 100):
+    for epoch in range(start_epoch, start_epoch + 200):
         print('-' * 10)
-        print('Epoch {}/{}'.format(epoch + 1, start_epoch + 100))
+        print('Epoch {}/{}'.format(epoch + 1, start_epoch + 200))
         train(trainloader, model, criterion, optimizer, epoch)
-        val(valloader, model, criterion, optimizer, epoch)
+        val(valloader, model, criterion, optimizer, epoch, BATCH_SIZE)
         scheduler.step()
 
 
@@ -135,7 +132,7 @@ def train(trainloader, model, criterion, optimizer, epoch):
     print("Train top5 accuracy: {}".format(top5.avg))
 
 # Validation
-def val(valloader, model, criterion, optimizer, epoch):
+def val(valloader, model, criterion, optimizer, epoch, BATCH_SIZE):
     global best_prec1
     model.eval()
     val_loss = 0
@@ -143,8 +140,8 @@ def val(valloader, model, criterion, optimizer, epoch):
     total = 0
     top1.reset()
     top5.reset()
-    class_correct = list(0. for _ in range(16))
-    class_total = list(0. for _ in range(16))
+    class_correct = list(0. for _ in range(15))
+    class_total = list(0. for _ in range(15))
 
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(valloader):
@@ -168,7 +165,7 @@ def val(valloader, model, criterion, optimizer, epoch):
             test_grid = torchvision.utils.make_grid(inputs)
             writer.add_image("test", test_grid, epoch)
 
-        for i in range(16):
+        for i in range(15):
             writer.add_scalar("accuracy of {}".format(class_names[i]), 100 * class_correct[i] / class_total[i], epoch)
             print("Accuracy of %5s : %2d %%" % (class_names[i], 100*class_correct[i]/class_total[i]))
 
@@ -187,9 +184,24 @@ def val(valloader, model, criterion, optimizer, epoch):
             'arch' : 'resnet50',
             'state_dict': model.state_dict(),
             'optimizer' : optimizer.state_dict(),
-            'best_prec1': best_prec1
+            'best_prec1': best_prec1,
+            'batch_size': BATCH_SIZE
         }
-        torch.save(state, '/workspace/jt/model/{}.pth.tar'.format(datetime.now().strftime('%Y%m%d-%H')))
+        torch.save(state, '/workspace/jt/model/paper-{}.pth.tar'.format(datetime.now().strftime('%Y%m%d-%H')))
+        best_prec1 = acc
+        print("Best val accuracy: {}".format(best_prec1))
+
+    if epoch % 10 == 0:
+        print('Saving..')
+        state = {
+            'epoch': epoch + 1,
+            'arch': 'resnet50',
+            'state_dict': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'best_prec1': best_prec1,
+            'batch_size': BATCH_SIZE
+        }
+        torch.save(state, '/workspace/jt/model/paper-{}.pth.tar'.format(datetime.now().strftime('%Y%m%d-%H')))
         best_prec1 = acc
         print("Best val accuracy: {}".format(best_prec1))
 
