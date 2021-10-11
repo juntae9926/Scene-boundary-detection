@@ -115,14 +115,22 @@ class ResNet(nn.Module):
 
         return x
 
-def resnet50(pretrained=False, **kwargs):
+def set_parameter_requires_grad(model, feature_extract):
+    if feature_extract:
+        for param in model.parameters():
+            param.requires_grad = False
+
+def resnet50(pretrained=False, feature_extract=True, **kwargs):
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
-        print("Hello")
+    if feature_extract:
+        set_parameter_requires_grad(model, feature_extract=True)
+
+    print("Pretrained and feature extracting mode(fix params)")
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 16)
-    return model
+    return model, feature_extract
 
 def resnet50_places365(pretrained=False, **kwargs):
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
