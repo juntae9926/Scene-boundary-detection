@@ -27,7 +27,10 @@ class gaussianGrouping:
         self.label_map_path = label_map_path
         self.video_fps = video_fps
         self.window_size = window_size
-        self.sigma = 1.5
+        if window_size < 4:
+            self.sigma = 1.5
+        else:
+            self.sigma = 2
         
     def makeGaussian(self):
         n = self.window_size * 2 + 1
@@ -40,15 +43,17 @@ class gaussianGrouping:
         # entering the real scores {aquarium:0.5, aquarium:0.2 ```}
         label_score = labelScore(label_map_path=self.label_map_path)
         frame_scores = []
-        for i in range(len(self.frame_results)):
-            for result in self.frame_results[0]['frame_result']:
-                frame_score = label_score
-                top = result["label"]["description"]
-                score = round(result["label"]["score"], 2)
+
+        for result in self.frame_results:
+            frame_score = label_score.copy()
+            print('point', frame_score)
+            for j in range(0, 5):
+                top = result["frame_result"][j]["label"]["description"]
+                score = round(result["frame_result"][j]["label"]["score"], 2)
                 frame_score[top] = score
-                frame_scores.append(frame_score)
-
-
+            frame_scores.append(frame_score)
+            print(frame_score)
+        print('frame scores: ',frame_scores)
         return frame_scores
 
     def placesContext(self):
@@ -60,7 +65,7 @@ class gaussianGrouping:
 
         for i in range(len(frame_scores)):
             if i < self.window_size or i >= len(frame_scores) - self.window_size:
-                a = max(frame_scores[i].keys())
+                a = max(frame_scores[i], key=frame_scores[i].get)
                 inference_list.append(a)
 
             dq.append(frame_scores[i])
@@ -78,6 +83,7 @@ class gaussianGrouping:
 
     def smoothing(self):
         inference_list = self.placesContext()
+        print('inference list: ',inference_list)
         result = []
         file_list = []
         for i in range(len(inference_list)):
@@ -92,18 +98,16 @@ class gaussianGrouping:
                 result.append(file_list)
                 file_list = []
                 file_list.append(inference_list[i])
-        print(result)
+
 
         sequence_result = []
         countLength = 0
         for i in range(len(result)):
             description = result[i][0]
             start_frame = countLength * self.video_fps
-            print('start frame', start_frame)
             length = len(result[i])
             countLength += length
             end_frame = (countLength - 1) * self.video_fps
-            print(end_frame)
             frame_result = {"start_frame": start_frame, "end_frame": end_frame, "label":{}}
             label = {"description": description}
             frame_result["label"] = label
@@ -111,10 +115,11 @@ class gaussianGrouping:
         return sequence_result
 
 if __name__ == '__main__':
-    VIDEO_NAME = 'koreanhouse_02'
+    VIDEO_NAME = 'palace_01'
     base_dir = "/workspace/jt/places/inference_frame_211003/{}".format(VIDEO_NAME)
     with open(base_dir + '/{}.json'.format(VIDEO_NAME)) as f:
         json_data = json.load(f)
-    f = gaussianGrouping(frame_results=json_data, label_map_path = '/workspace/classes.txt')
-    sequence_result = f.smoothing()
+    g = gaussianGrouping(window_size=10, frame_results=json_data, label_map_path='/workspace/classes.txt')
+    sequence_result = g.smoothing()
+
     print(sequence_result)
